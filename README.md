@@ -187,7 +187,145 @@ kubectl get pvc
 
 ---
 
-That's it! You are now set up to manage your Kubernetes cluster with AWS EKS, Fargate, and EFS.
+
+
+# AWS ECR and Kubernetes Deployment
+
+This guide provides instructions for building a Docker image, pushing it to AWS Elastic Container Registry (ECR), and updating a Kubernetes deployment to use the ECR image.
+
+## Step 1: Create an ECR Repository
+
+Run the following command to create an ECR repository:
+
+```bash
+aws ecr create-repository --repository-name todo-tasks --region ap-southeast-1
+```
+
+Note down the repository URI, which will look something like:
+
+```
+<account-id>.dkr.ecr.ap-southeast-1.amazonaws.com/todo-tasks
+```
+
+## Step 2: Authenticate Docker with ECR
+
+Run the following command to authenticate Docker to your ECR repository:
+
+```bash
+aws ecr get-login-password --region ap-southeast-1 | docker login --username AWS --password-stdin <account-id>.dkr.ecr.ap-southeast-1.amazonaws.com
+```
+
+## Step 3: Build the Docker Image Locally
+
+In the directory containing your Dockerfile, build the Docker image using the following command:
+
+```bash
+docker build -t todo-tasks .
+```
+
+## Step 4: Tag the Docker Image for ECR
+
+Tag the Docker image to match the ECR repository URI:
+
+```bash
+docker tag todo-tasks:latest <account-id>.dkr.ecr.ap-southeast-1.amazonaws.com/todo-tasks:latest
+```
+
+## Step 5: Push the Docker Image to ECR
+
+Push the tagged Docker image to the ECR repository:
+
+```bash
+docker push <account-id>.dkr.ecr.ap-southeast-1.amazonaws.com/todo-tasks:latest
+```
+
+## Step 6: Update Kubernetes Deployment to Use ECR Image
+
+Once the image is successfully pushed to ECR, update your Kubernetes deployment file to use the ECR image.
+
+Here’s an updated deployment YAML file:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tasks-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: task
+  template:
+    metadata:
+      labels:
+        app: task
+    spec:
+      containers:
+        - name: tasks-api
+          image: <account-id>.dkr.ecr.ap-southeast-1.amazonaws.com/todo-tasks:latest
+          env:
+            - name: MONGODB_CONNECTION_URI
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: MONGODB_CONNECTION_URI
+            - name: AUTH_API_ADDRESS
+              value: 'auth-service.default:3000'
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "1024Mi"
+              cpu: "1000m"
+```
+
+Replace `<account-id>` with your actual AWS account ID.
+
+## Step 7: Apply the Updated Kubernetes Deployment
+
+Run the following command to apply the changes to your Kubernetes cluster:
+
+```bash
+kubectl apply -f tasks-deployment.yaml
+```
+
+## Summary of Commands
+
+1. **Create ECR repository**:
+   ```bash
+   aws ecr create-repository --repository-name todo-tasks --region ap-southeast-1
+   ```
+
+2. **Authenticate Docker with ECR**:
+   ```bash
+   aws ecr get-login-password --region ap-southeast-1 | docker login --username AWS --password-stdin <account-id>.dkr.ecr.ap-southeast-1.amazonaws.com
+   ```
+
+3. **Build Docker image**:
+   ```bash
+   docker build -t todo-tasks .
+   ```
+
+4. **Tag Docker image**:
+   ```bash
+   docker tag todo-tasks:latest <account-id>.dkr.ecr.ap-southeast-1.amazonaws.com/todo-tasks:latest
+   ```
+
+5. **Push Docker image to ECR**:
+   ```bash
+   docker push <account-id>.dkr.ecr.ap-southeast-1.amazonaws.com/todo-tasks:latest
+   ```
+
+6. **Apply Kubernetes deployment**:
+   ```bash
+   kubectl apply -f tasks-deployment.yaml
+   ```
+
+
+
+
+
 
 ## Basic Commands
 

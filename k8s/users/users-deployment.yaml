@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: users-api
-          image: academind/kub-dep-users:latest
+          image: deepakgonda/todo-users:latest
           env:
             - name: MONGODB_CONNECTION_URI
               valueFrom:
