@@ -98,10 +98,10 @@ const createUser = async (req, res, next) => {
     return next(error);
   }
 
-  const logEntry = `${new Date().toISOString()} - ${savedUser.id} - ${email}\n`;
+  const logEntry = `${new Date().toISOString()} User Created - ${savedUser.id} - ${email}\n`;
 
   fs.appendFile(
-    path.join('/app', 'users', 'users-log.txt'),
+    path.join('/app', `${process.env.LOGS_DIR}`, 'users-log.txt'),
     logEntry,
     (err) => {
       console.log(err);
@@ -149,6 +149,17 @@ const verifyUser = async (req, res, next) => {
       existingUser.password,
       existingUser.id
     );
+
+    const logEntry = `${new Date().toISOString()} User Logged In - ${savedUser.id} - ${email}\n`;
+
+    fs.appendFile(
+      path.join('/app', `${process.env.LOGS_DIR}`, 'users-log.txt'),
+      logEntry,
+      (err) => {
+        console.log(err);
+      }
+    );
+
     res.status(200).json({ token: token, userId: existingUser.id });
   } catch (err) {
     next(err);
@@ -156,7 +167,7 @@ const verifyUser = async (req, res, next) => {
 };
 
 const getLogs = (req, res, next) => {
-  fs.readFile(path.join('/app', 'users', 'users-log.txt'), (err, data) => {
+  fs.readFile(path.join('/app', `${process.env.LOGS_DIR}`, 'users-log.txt'), (err, data) => {
     if (err) {
       createAndThrowError('Could not open logs file.', 500);
     } else {

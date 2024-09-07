@@ -23,6 +23,8 @@ spec:
                   key: MONGODB_CONNECTION_URI
             - name: AUTH_API_ADDRESS
               value: 'auth-service.default:3000'
+            - name: LOGS_DIR
+              value: 'user-logs'
           resources:
             requests:
               memory: "256Mi"
@@ -32,7 +34,7 @@ spec:
               cpu: "1000m"
           volumeMounts:
             - name: efs-vol
-              mountPath: /app/users
+              mountPath: /app/user-logs
       volumes:
         - name: efs-vol
           persistentVolumeClaim: 
