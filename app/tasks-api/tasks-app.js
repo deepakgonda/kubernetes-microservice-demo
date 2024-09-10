@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
+const cors = require('cors');
 
 const taskRoutes = require('./routes/task-routes');
 const verifyUser = require('./middleware/user-auth');
@@ -9,12 +10,20 @@ const app = express();
 
 app.use(bodyParser.json());
 
-app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST,GET,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
-  next();
-});
+
+// Use the cors package
+app.use(cors({
+  origin: '*', // Allow requests from this origin
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allow these methods
+  allowedHeaders: ['Content-Type', 'Authorization'], // Allow these headers
+}));
+
+// app.use((req, res, next) => {
+//   res.setHeader('Access-Control-Allow-Origin', '*');
+//   res.setHeader('Access-Control-Allow-Methods', 'POST,GET,OPTIONS');
+//   res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+//   next();
+// });
 
 app.use(verifyUser, taskRoutes);
 
@@ -31,14 +40,16 @@ app.use((err, req, res, next) => {
   res.status(code).json({ message: message });
 });
 
-mongoose.connect(
-  process.env.MONGODB_CONNECTION_URI,
-  { useNewUrlParser: true },
-  (err) => {
-    if (err) {
-      console.log('COULD NOT CONNECT TO MONGODB!');
-    } else {
-      app.listen(3000);
-    }
-  }
-);
+const mongoURI = process.env.MONGODB_CONNECTION_URI;
+
+mongoose.connect(mongoURI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+  .then(() => {
+    console.log('MongoDB connected successfully');
+    app.listen(3000);
+  })
+  .catch((err) => {
+    console.error('MongoDB connection error:', err);
+  });

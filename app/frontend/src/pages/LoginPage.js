@@ -3,6 +3,10 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Container, TextField, Button, Typography, Box, CircularProgress } from '@mui/material';
 import { AuthContext } from '../AuthContext';
 
+console.log("Users Service URL:", process.env.REACT_APP_USERS_SERVICE_API_URL);
+console.log("Tasks Service URL:", process.env.REACT_APP_TASKS_SERVICE_API_URL);
+console.log("Environment:", process.env.REACT_APP_ENVIRONMENT);
+
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

@@ -31,6 +31,12 @@ const createToken = (userId) => {
   });
 };
 
+const createRefreshToken = (userId) => {
+  return jwt.sign({ uid: userId }, process.env.TOKEN_KEY, {
+    expiresIn: '1000h',
+  });
+};
+
 const verifyToken = (token) => {
   try {
     const decodedToken = jwt.verify(token, process.env.TOKEN_KEY);
@@ -61,8 +67,9 @@ const getToken = async (req, res, next) => {
   }
 
   const token = createToken(userId);
+  const refreshToken = createRefreshToken(userId);
 
-  res.status(200).json({ token });
+  res.status(200).json({ token, refreshToken });
 };
 
 const getTokenConfirmation = (req, res) => {

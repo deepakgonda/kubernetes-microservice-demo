@@ -1,0 +1,18 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install nodemon globally for hot-reloading
+RUN npm install -g nodemon
+
+# Copy only package.json and package-lock.json first
+COPY package.json ./
+
+RUN npm install
+
+COPY . .
+
+EXPOSE 3000
+
+# Use nodemon to automatically restart the server on file changes
+CMD ["nodemon", "--inspect", "users-app.js"]

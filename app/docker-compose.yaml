@@ -3,7 +3,7 @@ services:
   auth:
     build: ./auth-api
     ports:
-      - '3000:3000'  # Expose only on internal network (no public ports)
+      - ':3000'  # Expose only on internal network (no public ports)
     environment:
       TOKEN_KEY: 'very_secure_token'
     networks:
@@ -14,11 +14,11 @@ services:
     ports:
       - '8080:3000'
     environment:
-      MONGODB_CONNECTION_URI: 'mongodb+srv://testuser:testpassword@cluster0.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
+      MONGODB_CONNECTION_URI: ${MONGODB_CONNECTION_URI}
       AUTH_API_ADDRESS: 'auth:3000'
-      LOGS_DIR: '/app/user-logs'
+      LOGS_DIR: 'user-logs'
     volumes:
-      - user-logs:/app/user-logs
+      - app-logs:/app/app-logs
     networks:
       - public
       - internal  # Users service needs access to auth service
@@ -26,16 +26,26 @@ services:
   tasks:
     build: ./tasks-api
     ports:
-      - '3000:3000'
+      - '4000:3000'
     environment:
-      MONGODB_CONNECTION_URI: 'mongodb+srv://testuser:testpassword@cluster0.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
+      MONGODB_CONNECTION_URI: ${MONGODB_CONNECTION_URI}
       AUTH_API_ADDRESS: 'auth:3000'
+      LOGS_DIR: 'tasks-logs'
+    volumes:
+      - app-logs:/app/app-logs
     networks:
       - public
       - internal  # Tasks service also needs access to auth service
 
+  frontend:
+    build: ./frontend
+    ports:
+      - '80:80'
+    networks:
+      - public
+
 volumes:
-  user-logs:
+  app-logs:
 
 networks:
   public:

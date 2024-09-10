@@ -1,0 +1,72 @@
+version: "3"
+services:
+  auth:
+    build:
+      context: ./auth-api
+      dockerfile: Dockerfile.dev
+    ports:
+      - ':3000'  # Use different port for internal service development
+    volumes:
+      - ./auth-api:/app
+      - /app/node_modules
+    environment:
+      TOKEN_KEY: 'very_secure_token'
+    networks:
+      - internal
+
+  users:
+    build:
+      context: ./users-api
+      dockerfile: Dockerfile.dev
+    ports:
+      - '8080:3000'
+    volumes:
+      - ./users-api:/app
+      - /app/node_modules
+    environment:
+      MONGODB_CONNECTION_URI: ${MONGODB_CONNECTION_URI}
+      AUTH_API_ADDRESS: 'auth:3000'
+      LOGS_DIR: 'user-logs'
+    networks:
+      - public
+      - internal
+
+  tasks:
+    build:
+      context: ./tasks-api
+      dockerfile: Dockerfile.dev
+    ports:
+      - '4000:3000'
+    volumes:
+      - ./tasks-api:/app
+      - /app/node_modules
+    environment:
+      MONGODB_CONNECTION_URI: ${MONGODB_CONNECTION_URI}
+      AUTH_API_ADDRESS: 'auth:3000'
+      LOGS_DIR: 'tasks-logs'
+    networks:
+      - public
+      - internal
+
+  frontend:
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    networks:
+      - public
+
+volumes:
+  app-logs:
+
+networks:
+  public:
+    driver: bridge
+  internal:
+    driver: bridge

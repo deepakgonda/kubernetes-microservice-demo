@@ -1,5 +1,5 @@
 const path = require('path');
-const fs = require('fs');
+const fs = require('fs-extra')
 
 const axios = require('axios');
 const { createAndThrowError, createError } = require('../helpers/error');
@@ -53,7 +53,10 @@ const getTokenForUser = async (password, hashedPassword, uid) => {
         userId: uid
       }
     );
-    return response.data.token;
+    return { 
+        token: response.data.token ,
+        refreshToken: response.data.refreshToken,
+      };
   } catch (err) {
     const code = (err.response && err.response.status) || 500;
     createAndThrowError(err.message || 'Failed to verify user.', code);
@@ -99,14 +102,7 @@ const createUser = async (req, res, next) => {
   }
 
   const logEntry = `${new Date().toISOString()} User Created - ${savedUser.id} - ${email}\n`;
-
-  fs.appendFile(
-    path.join('/app', `${process.env.LOGS_DIR}`, 'users-log.txt'),
-    logEntry,
-    (err) => {
-      console.log(err);
-    }
-  );
+  await addLog(logEntry);
 
   res
     .status(201)
@@ -144,37 +140,44 @@ const verifyUser = async (req, res, next) => {
 
   try {
     console.log(password, existingUser);
-    const token = await getTokenForUser(
+    const tokenData = await getTokenForUser(
       password,
       existingUser.password,
       existingUser.id
     );
 
-    const logEntry = `${new Date().toISOString()} User Logged In - ${savedUser.id} - ${email}\n`;
+    const logEntry = `${new Date().toISOString()} User Logged In - ${existingUser.id} - ${email}\n`;
+    await addLog(logEntry);
 
-    fs.appendFile(
-      path.join('/app', `${process.env.LOGS_DIR}`, 'users-log.txt'),
-      logEntry,
-      (err) => {
-        console.log(err);
-      }
-    );
-
-    res.status(200).json({ token: token, userId: existingUser.id });
+    res.status(200).json({ token: tokenData.token, refreshToken: tokenData.refreshToken, userId: existingUser.id });
   } catch (err) {
     next(err);
   }
 };
 
-const getLogs = (req, res, next) => {
-  fs.readFile(path.join('/app', `${process.env.LOGS_DIR}`, 'users-log.txt'), (err, data) => {
-    if (err) {
-      createAndThrowError('Could not open logs file.', 500);
-    } else {
-      const dataArr = data.toString().split('\n');
-      res.status(200).json({ logs: dataArr });
-    }
-  });
+
+const addLog = async (logEntry) => {
+  const logsFile = path.join('/app', `${process.env.LOGS_DIR}`, 'users-log.txt');
+  try {
+    await fs.ensureFile(logsFile);
+    await fs.appendFile(logsFile, logEntry);
+  } catch (err) {
+    console.log('Could not add logs to log file at path:', logsFile.toString())
+  }
+}
+
+
+const getLogs = async (req, res, next) => {
+  const logsFile = path.join('/app', `${process.env.LOGS_DIR}`, 'users-log.txt');
+  try {
+    await fs.ensureFile(logsFile);
+    const dataFromFile = await fs.readFile(logsFile);
+    const dataArr = dataFromFile.toString().split('\n');
+    res.status(200).json({ logs: dataArr });
+  } catch (err) {
+    console.log('Could not read logs to log file at path:', logsFile.toString())
+    createAndThrowError('Could not open logs file.', 500);
+  }
 };
 
 exports.createUser = createUser;

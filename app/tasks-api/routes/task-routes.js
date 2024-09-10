@@ -10,4 +10,6 @@ router.post('/tasks', taskActions.createTask);
 
 router.delete('/tasks/:id', taskActions.deleteTask);
 
+router.get('/logs', taskActions.getLogs);
+
 module.exports = router;
