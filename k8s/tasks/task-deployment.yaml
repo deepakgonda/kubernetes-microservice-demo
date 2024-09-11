@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: tasks-deployment
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app: task
@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: tasks-api
-          image: deepakgonda/todo-tasks:latest
+          image: 992382688515.dkr.ecr.ap-southeast-1.amazonaws.com/todo-tasks:latest
           env:
             - name: MONGODB_CONNECTION_URI
               valueFrom:
@@ -30,3 +30,18 @@ spec:
             limits:
               memory: "1024Mi"
               cpu: "1000m"
+          readinessProbe:
+            httpGet:
+              path: /health    # Change this path if your app uses a different health check path
+              port: 3000        # The port your application is running on
+            initialDelaySeconds: 5  # Time to wait before the first probe
+            periodSeconds: 10       # Time between each probe
+            successThreshold: 1     # Minimum consecutive successes for the pod to be marked "ready"
+            failureThreshold: 5     # Number of consecutive failures before marking the pod "unready"
+          livenessProbe:
+            httpGet:
+              path: /health    # Optional liveness probe if you want to check app health periodically
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 15
+            failureThreshold: 5

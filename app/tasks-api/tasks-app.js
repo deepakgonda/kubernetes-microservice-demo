@@ -2,9 +2,9 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const fs = require('fs-extra');
 
 const taskRoutes = require('./routes/task-routes');
-const verifyUser = require('./middleware/user-auth');
 
 const app = express();
 
@@ -25,7 +25,7 @@ app.use(cors({
 //   next();
 // });
 
-app.use(verifyUser, taskRoutes);
+app.use(taskRoutes);
 
 app.use((err, req, res, next) => {
   let code = 500;
@@ -40,7 +40,15 @@ app.use((err, req, res, next) => {
   res.status(code).json({ message: message });
 });
 
+
+// Start the Express server even if MongoDB connection fails
+app.listen(3000, () => {
+  console.log('Server is running on port 3000');
+});
+
+
 const mongoURI = process.env.MONGODB_CONNECTION_URI;
+console.log('mongoURI:', mongoURI);
 
 mongoose.connect(mongoURI, {
   useNewUrlParser: true,
@@ -48,7 +56,6 @@ mongoose.connect(mongoURI, {
 })
   .then(() => {
     console.log('MongoDB connected successfully');
-    app.listen(3000);
   })
   .catch((err) => {
     console.error('MongoDB connection error:', err);

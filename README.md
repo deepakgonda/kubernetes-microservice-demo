@@ -628,3 +628,17 @@ kubectl apply -f <file-name>.yaml
 ```bash
 kubectl delete <resource-type> <resource-name>
 ```
+
+
+### Restart / Rollout Deployment:
+```bash
+ kubectl rollout restart deployment <deployment-name> -n default
+ ```
+
+### To Create Secret
+```bash
+kubectl create secret generic app-secrets \
+  --from-literal=username=admin \
+  --from-literal=password=new-password
+```
+

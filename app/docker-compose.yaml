@@ -41,6 +41,9 @@ services:
     build: ./frontend
     ports:
       - '80:80'
+    environment:
+      - NODE_ENV=production
+      # - NODE_ENV=development
     networks:
       - public
 

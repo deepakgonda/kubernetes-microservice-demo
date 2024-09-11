@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: frontend-react-app
-          image: deepakgonda/todo-frontend:latest
+          image: 992382688515.dkr.ecr.ap-southeast-1.amazonaws.com/frontend:latest
           resources:
             requests:
               memory: "256Mi"

@@ -1,15 +1,20 @@
 const express = require('express');
 
 const taskActions = require('../controllers/task-actions');
+const verifyUser = require('../middleware/user-auth');
 
 const router = express.Router();
 
-router.get('/tasks', taskActions.getTasks);
+router.get('/health', (req, res) => {
+    return res.json({'ready': true}).status(200);
+});
 
-router.post('/tasks', taskActions.createTask);
+router.get('/tasks', verifyUser, taskActions.getTasks);
 
-router.delete('/tasks/:id', taskActions.deleteTask);
+router.post('/tasks', verifyUser, taskActions.createTask);
 
-router.get('/logs', taskActions.getLogs);
+router.delete('/tasks/:id', verifyUser, taskActions.deleteTask);
+
+router.get('/logs', verifyUser, taskActions.getLogs);
 
 module.exports = router;

@@ -1,15 +1,20 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: tasks-ingress
+  name: "tasks-ingress"
   annotations:
-    kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/healthcheck-path: /health
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
     alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-southeast-1:992382688515:certificate/2c9852d9-6fa4-4608-8202-a732a1ab584f
     alb.ingress.kubernetes.io/ssl-redirect: '443'
     alb.ingress.kubernetes.io/actions.ssl-redirect: '{"Type": "redirect", "RedirectConfig": {"Protocol": "HTTPS", "Port": "443", "StatusCode": "HTTP_301"}}'
+    alb.ingress.kubernetes.io/load-balancer-name: tasks-alb
+  labels:
+    app: task
 spec:
+  ingressClassName: alb
   rules:
     - host: tasks-service-api.k8s.servicemind.asia
       http:
@@ -18,6 +23,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: tasks-service
+                name: "tasks-service"
                 port:
                   number: 80

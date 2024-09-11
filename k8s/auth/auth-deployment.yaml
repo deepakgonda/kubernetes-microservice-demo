@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: auth-api
-          image: deepakgonda/todo-auth:latest
+          image: 992382688515.dkr.ecr.ap-southeast-1.amazonaws.com/todo-auth:latest
           env:
             - name: TOKEN_KEY
               valueFrom:
