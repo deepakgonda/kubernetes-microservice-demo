@@ -95,7 +95,7 @@ Added new context arn:aws:eks:ap-southeast-1:123456789012:cluster/my-eks-cluster
 
 ## Next Step: Create Some Fargate Profiles for running your workloads 
 
-1. Create Fargate profile for your default namespace:
+### 1. Create Fargate profile for your default namespace:
 
 ```bash
 aws eks create-fargate-profile   --cluster-name my-eks-cluster   --fargate-profile-name my-eks-fargate-profile   --pod-execution-role-arn arn:aws:iam::123456789012:role/my-eks-fargate-role   --selectors namespace=default --profile=my-sandbox-profile
@@ -107,7 +107,7 @@ aws eks create-fargate-profile   --cluster-name my-eks-cluster   --fargate-profi
 aws eks describe-fargate-profile --cluster-name my-eks-cluster --fargate-profile-name my-eks-fargate-profile --profile=my-sandbox-profile
 ```
 
-2. Create Fargate profile for your kube-system namespace (This is required by aws to run core services):
+### 2. Create Fargate profile for your kube-system namespace (This is required by aws to run core services):
 
 ```bash
 aws eks create-fargate-profile   --cluster-name my-eks-cluster   --fargate-profile-name kube-system-eks-fargate-profile   --pod-execution-role-arn arn:aws:iam::123456789012:role/my-eks-fargate-role   --selectors namespace=kube-system --profile=my-sandbox-profile
