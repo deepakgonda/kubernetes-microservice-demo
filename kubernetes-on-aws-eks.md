@@ -1,6 +1,24 @@
 # Kubernetes on AWS EKS
 
+## Use AWS Cloudformation to Create VPC
+We will create VPC with two public and two private subnets in two availability zones. Based on this [Amazon EKS User Guide - VPC for your Amazon EKS cluster](https://docs.aws.amazon.com/eks/latest/userguide/creating-a-vpc.html)
+
+But since we will add some more resources like small EC2 Instance, so we will modify template a little bit. But to use this template you need to first create a ssh key pair, which you will have to mention in the template parameters.
+[eks-public-private-2-subnets.yaml](./k8s/aws-vpc/eks-public-private-2-subnets.yaml)
+
+After this we can apply next template in cloudformation to create some roles. Basically one role is for EKS Cluster and one role is for Fargate Pods:
+[eks-iam-roles.yaml](./k8s/aws-vpc/eks-iam-roles.yaml)
+
+---
+
 ## Install Kustomize (kubectl) for Linux
+Kustomize is a configuration management tool for Kubernetes that allows you to customize and manage YAML files without modifying the original files. It enables you to:
+
+Layered customization: Apply overlays (modifications) to base configurations, like changing environment-specific settings (e.g., dev, prod).
+Resource composition: Combine multiple YAML files into a single configuration for deployment.
+Patching: Modify or patch specific parts of Kubernetes resources (like labels or container images) without duplicating configuration files.
+Declarative management: Define configurations in a declarative way, making it easy to maintain and version control.
+Kustomize is natively supported by kubectl, making it a useful tool for managing complex Kubernetes deployments.
 
 ```bash
 curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
@@ -14,9 +32,30 @@ sudo mv kubectl /usr/local/bin/
 kubectl version --client
 ```
 
+## Install eksctl (in Linux)
+eksctl is a command-line tool used for creating, managing, and deleting Amazon EKS (Elastic Kubernetes Service) clusters. It simplifies the setup of Kubernetes clusters on AWS by automating tasks such as:
+
+Cluster creation: Quickly create EKS clusters with nodes and networking configured.
+Node group management: Add or remove node groups (EC2 instances) to your clusters.
+Kubernetes version upgrades: Easily upgrade the Kubernetes version of your cluster.
+Cluster deletion: Cleanly delete an entire EKS cluster and associated resources.
+Configuration with YAML: Manage clusters using YAML files for declarative cluster configurations.
+It's a simple and efficient tool for handling most EKS cluster operations.
+
+```bash
+curl -s --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+sudo mv /tmp/eksctl /usr/local/bin
+```
+
+### To Test Installation:
+
+```bash
+eksctl version
+```
+
 ---
 
-## AWS Configuration
+## AWS Profile Configuration
 
 First, configure AWS using the following command:
 
@@ -26,11 +65,21 @@ aws configure --profile=my-sandbox-profile
 
 Enter all the values prompted (Access Key, Secret Key, Region, etc.).
 
+
+### To Test Installation:
+
+```bash
+aws s3 ls --profile my-sandbox-profile
+```
+This command lists the S3 buckets in your account using the my-sandbox-profile. If AWS is configured correctly, it will show the list of S3 buckets or a message indicating you don't have any buckets. If there's an issue with the configuration, you'll see an error message like "Unable to locate credentials."
+
+This helps ensure that your AWS credentials and profile are set up correctly.
+
 ---
 
-## Updating Kubeconfig for AWS EKS
+## Next Step: Updating Kubeconfig for AWS EKS
 
-Run the following command to update the kubeconfig for your EKS cluster:
+Run the following command to update the kubeconfig for your EKS cluster. It will setup credentials in your  ~/.kube/config file, so that you can use kubectl command to connect and manage EKS Cluster:
 
 ```bash
 aws eks --region ap-southeast-1 update-kubeconfig --name my-eks-cluster --profile=my-sandbox-profile
@@ -44,9 +93,9 @@ Added new context arn:aws:eks:ap-southeast-1:123456789012:cluster/my-eks-cluster
 
 ---
 
-## Creating a Fargate Profile for Default Namespace
+## Next Step: Create Some Fargate Profiles for running your workloads 
 
-To create a Fargate profile for your default namespace, run the following command:
+1. Create Fargate profile for your default namespace:
 
 ```bash
 aws eks create-fargate-profile   --cluster-name my-eks-cluster   --fargate-profile-name my-eks-fargate-profile   --pod-execution-role-arn arn:aws:iam::123456789012:role/my-eks-fargate-role   --selectors namespace=default --profile=my-sandbox-profile
@@ -57,6 +106,101 @@ aws eks create-fargate-profile   --cluster-name my-eks-cluster   --fargate-profi
 ```bash
 aws eks describe-fargate-profile --cluster-name my-eks-cluster --fargate-profile-name my-eks-fargate-profile --profile=my-sandbox-profile
 ```
+
+2. Create Fargate profile for your kube-system namespace (This is required by aws to run core services):
+
+```bash
+aws eks create-fargate-profile   --cluster-name my-eks-cluster   --fargate-profile-name kube-system-eks-fargate-profile   --pod-execution-role-arn arn:aws:iam::123456789012:role/my-eks-fargate-role   --selectors namespace=kube-system --profile=my-sandbox-profile
+```
+
+### Verifying the Fargate Profile
+
+```bash
+aws eks describe-fargate-profile --cluster-name ccc --fargate-profile-name kube-system-eks-fargate-profile  --profile=my-sandbox-profile
+```
+
+
+---
+
+## Next Step: Install aws-load-balancer-controller (AWS doesn't do it by default. And we will need to successfully connect our deployed services from outside)
+For this you can use following guides on AWS. Just following the instructions.
+[aws-load-balancer-controller](https://docs.aws.amazon.com/eks/latest/userguide/aws-load-balancer-controller.html)
+[lbc-helm](https://docs.aws.amazon.com/eks/latest/userguide/lbc-helm.html)
+
+I am mentioning steps mentioned in above guides which I have followed:
+
+1. Download Iam Policy file
+```bash
+curl -O https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.7.2/docs/install/iam_policy.json
+```
+
+2. Then create policy:
+```bash
+aws iam create-policy \
+    --policy-name AWSLoadBalancerControllerIAMPolicy \
+    --policy-document file://iam_policy.json \
+    --profile=my-sandbox-profile
+```
+
+3. Then associate Iam OIDC Provider
+```bash
+eksctl utils associate-iam-oidc-provider \
+    --region=ap-southeast-1 \
+    --cluster=my-eks-cluster \
+    --approve --profile=my-sandbox-profile
+```
+
+
+4. Then create Iam Service Account
+```bash
+eksctl create iamserviceaccount \
+  --cluster=my-eks-cluster \
+  --namespace=kube-system \
+  --name=aws-load-balancer-controller \
+  --role-name AmazonEKSLoadBalancerControllerRole \
+  --attach-policy-arn=arn:aws:iam::111122223333:policy/AWSLoadBalancerControllerIAMPolicy \
+  --approve
+```
+
+To list all service-accounts:
+```bash
+eksctl  get iamserviceaccount --cluster todo-eks-cluster --profile=my-sandbox-profile
+```
+
+
+5. Now Finally Install Load Balancer:
+
+```bash
+helm repo add eks https://aws.github.io/eks-charts
+```
+
+```bash
+helm repo update eks
+```
+
+```bash
+ helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
+  -n kube-system \
+  --set clusterName=my-eks-cluster \
+  --set serviceAccount.create=false \
+  --set serviceAccount.name=aws-load-balancer-controller \
+  --set region=ap-southeast-1 \
+  --set vpcId=vpc-123456abcde
+```
+
+
+6. Verify that the controller is installed:
+```bash
+kubectl get deployment -n kube-system aws-load-balancer-controller
+```
+
+7. You can also check the logs of aws-load-balancer-controller by following command, so you can see if anything goes wrong:
+```bash
+kubectl logs -n kube-system -l app.kubernetes.io/name=aws-load-balancer-controller
+```
+
+
+Now after this step you can apply your deployments, services and ingress.
 
 ---
 
