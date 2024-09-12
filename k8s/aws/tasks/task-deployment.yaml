@@ -23,6 +23,8 @@ spec:
                   key: MONGODB_CONNECTION_URI
             - name: AUTH_API_ADDRESS
               value: 'auth-service.default:3000'
+            - name: LOGS_DIR
+              value: 'tasks-logs'
           resources:
             requests:
               memory: "256Mi"
@@ -45,3 +47,10 @@ spec:
             initialDelaySeconds: 5
             periodSeconds: 15
             failureThreshold: 5
+          volumeMounts:
+            - name: efs-vol
+              mountPath: /app/tasks-logs
+      volumes:
+        - name: efs-vol
+          persistentVolumeClaim: 
+            claimName: efs-pvc

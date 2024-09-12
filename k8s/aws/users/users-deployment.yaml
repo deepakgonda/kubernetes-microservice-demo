@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: users-deployment
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: users
@@ -47,3 +47,10 @@ spec:
             initialDelaySeconds: 5
             periodSeconds: 15
             failureThreshold: 5
+          volumeMounts:
+            - name: efs-vol
+              mountPath: /app/user-logs
+      volumes:
+        - name: efs-vol
+          persistentVolumeClaim: 
+            claimName: efs-pvc
