@@ -204,29 +204,9 @@ Now after this step you can apply your deployments, services and ingress.
 
 ---
 
-## Creating Secrets in Kubernetes
-
-To create secrets in Kubernetes, use the following command:
-
-```bash
-kubectl create secret generic app-secrets   --from-literal=TOKEN_KEY='test-token-key'   --from-literal=MONGODB_CONNECTION_URI='mongodb+srv://test-user:test-password@cluster0.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
-```
-
-Output:
-
-```bash
-secret/app-secrets created
-```
-
-### To List Secrets:
-
-```bash
-kubectl get secrets
-```
-
----
-
-## Using EFS with EKS
+## Using EFS with EKS (AS CSI Persistent Volume)
+We can use this Amazon EKS User Guide:
+[Store an elastic file system with Amazon EFS](https://docs.aws.amazon.com/eks/latest/userguide/efs-csi.html)
 
 1. **Create an EFS Volume**: Ensure that you create an EFS volume and configure the security group to allow access to your VPC (e.g., `192.168.0.0/16`). Note down the File System ID.
 
@@ -331,10 +311,28 @@ kubectl get pvc
 ---
 
 
+## Creating Secrets in Kubernetes
 
-# AWS ECR and Kubernetes Deployment
+To create secrets in Kubernetes, use the following command:
 
-This guide provides instructions for building a Docker image, pushing it to AWS Elastic Container Registry (ECR), and updating a Kubernetes deployment to use the ECR image.
+```bash
+kubectl create secret generic app-secrets   --from-literal=TOKEN_KEY='test-token-key'   --from-literal=MONGODB_CONNECTION_URI='mongodb+srv://test-user:test-password@cluster0.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
+```
+
+Output:
+
+```bash
+secret/app-secrets created
+```
+
+### To List Secrets:
+
+```bash
+kubectl get secrets
+```
+
+---
+Now lets create some ECR Repo, to upload our docker images
 
 ## Step 1: Create an ECR Repository
 
