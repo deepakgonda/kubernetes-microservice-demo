@@ -206,15 +206,14 @@ Now after this step you can apply your deployments, services and ingress.
 
 ## Using EFS with EKS (AS CSI Persistent Volume)
 We can use this Amazon EKS User Guide:
-[Store an elastic file system with Amazon EFS](https://docs.aws.amazon.com/eks/latest/userguide/efs-csi.html)
+[Store an elastic file system with Amazon EFS](https://github.com/kubernetes-sigs/aws-efs-csi-driver/blob/master/examples/kubernetes/static_provisioning/README.md)
 
-1. **Create an EFS Volume**: Ensure that you create an EFS volume and configure the security group to allow access to your VPC (e.g., `192.168.0.0/16`). Note down the File System ID.
+Also we need not to install efs-csi driver for Fargate Pods. It can be found here:
+[Amazon EKS on AWS Fargate now supports Amazon EFS file systems](https://aws.amazon.com/about-aws/whats-new/2020/08/amazon-ek-on-aws-fargate-now-supports-amazon-efs-file-systems/)
 
-### Install the EFS CSI Driver:
 
-```bash
-kubectl apply -k "github.com/kubernetes-sigs/aws-efs-csi-driver/deploy/kubernetes/overlays/stable/ecr/?ref=release-2.0"
-```
+### **Create an EFS Volume**: Ensure that you create an EFS volume and configure the security group to allow access to your VPC (e.g., `192.168.0.0/16`). Note down the File System ID.
+
 
 ### Create EFS StorageClass:
 
