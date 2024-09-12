@@ -3,17 +3,17 @@ kind: Deployment
 metadata:
   name: frontend-deployment
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
-      app: frontend-app
+      app: frontend
   template:
     metadata:
       labels:
-        app: frontend-app
+        app: frontend
     spec:
       containers:
-        - name: frontend-react-app
+        - name: frontend-app
           image: 992382688515.dkr.ecr.ap-southeast-1.amazonaws.com/frontend:latest
           resources:
             requests:
@@ -22,3 +22,18 @@ spec:
             limits:
               memory: "1024Mi"
               cpu: "1000m"
+          readinessProbe:
+            httpGet:
+              path: /index.html    # Change this path if your app uses a different health check path
+              port: 8080        # The port your application is running on
+            initialDelaySeconds: 5  # Time to wait before the first probe
+            periodSeconds: 10       # Time between each probe
+            successThreshold: 1     # Minimum consecutive successes for the pod to be marked "ready"
+            failureThreshold: 5     # Number of consecutive failures before marking the pod "unready"
+          livenessProbe:
+            httpGet:
+              path: /index.html    # Optional liveness probe if you want to check app health periodically
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 15
+            failureThreshold: 5

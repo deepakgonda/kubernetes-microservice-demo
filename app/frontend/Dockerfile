@@ -1,5 +1,4 @@
-# Step 1: Build the React app
-# Use an official Node image to build the app
+# Step 1: Build the React app using an official Node image
 FROM node:20 AS build
 
 # Set the working directory in the container
@@ -8,28 +7,26 @@ WORKDIR /app
 # Copy package.json and package-lock.json to the working directory
 COPY package*.json ./
 
-# Install the dependencies
-RUN npm install
+# Install dependencies
+RUN npm install --production
 
-# Copy the entire project to the working directory
+# Copy the rest of the project to the working directory
 COPY . .
-
-# Set NODE_ENV to production (React will automatically pick .env.production)
-ARG NODE_ENV=production
-ENV NODE_ENV=${NODE_ENV}
 
 # Build the React app for production
 RUN npm run build
 
-# Step 2: Serve the built app using Nginx
-# Use an official Nginx image to serve the built app
+# Step 2: Serve the built app using Nginx with a custom configuration
 FROM nginx:stable-alpine
+
+# Copy the custom Nginx configuration file
+COPY ./nginx/nginx.conf /etc/nginx/nginx.conf
 
 # Copy the build output to the Nginx HTML directory
 COPY --from=build /app/build /usr/share/nginx/html
 
-# Expose port 80 to serve the app
-EXPOSE 80
+# Expose port 8080 instead of the default 80
+EXPOSE 8080
 
-# Start Nginx server
+# Start the Nginx server
 CMD ["nginx", "-g", "daemon off;"]
